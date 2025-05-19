@@ -1,7 +1,7 @@
 #!/bin/bash
 
 mkdir -p $HOME/.local
-git clone https://github.com/burke/minidev.git $HOME/.local/minidev
+git clone https://github.com/georgef-dev/minidev.git $HOME/.local/minidev
   
 install_bash_shell_shim() {
   local bp
