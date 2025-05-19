@@ -9,7 +9,7 @@ been done here.
 ## install
 
 ```bash
-curl https://raw.githubusercontent.com/burke/minidev/master/install.sh | bash
+curl https://raw.githubusercontent.com/georgef-dev/minidev/master/install.sh | bash
 ```
 
 this writes minidev to ~/.local/minidev and sources it from your  .profile
@@ -39,8 +39,8 @@ If you want to use the same dotfiles at home and at work, you may enjoy somethin
 ```bash
 if [ -f /opt/dev/dev.sh ]; then
   source /opt/dev/dev.sh
-elif [ -f ~/src/github.com/burke/minidev/dev.sh ]; then
-  source ~/src/github.com/burke/minidev/dev.sh
+elif [ -f ~/src/github.com/georgef-dev/minidev/dev.sh ]; then
+  source ~/src/github.com/georgef-dev/minidev/dev.sh
 fi
 ```
 
