@@ -1,4 +1,20 @@
+env:
+  BUNDLE_WITHOUT: production
+
 up:
-  - ruby: 2.5.6
+  instructions:
+    - Install PostgreSQL and Redis if they are not already available.
+    - Copy `.env.example` to `.env` if the project expects one.
+  dependencies:
+    - bundle install
+    - yarn install
+  build:
+    - build
+  serve: server
 
 build: script/update-deps
+server: bundle exec ruby -run -e httpd . -p 3000
+
+commands:
+  test:
+    run: bundle exec ruby -e 'puts "add tests"'

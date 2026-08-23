@@ -24,7 +24,7 @@ module Dev
       end
 
       def self.help
-        'TODO'
+        'Clone a GitHub repository into the configured github_root and change into it.'
       end
     end
   end

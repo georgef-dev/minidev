@@ -17,9 +17,17 @@ module Dev
     register(:Cd,     'cd',     'dev/commands/cd')
     register(:Clone,  'clone',  'dev/commands/clone')
     register(:Config, 'config', 'dev/commands/config')
+    register(:Doctor, 'doctor', 'dev/commands/doctor')
+    register(:Down,   'down',   'dev/commands/down')
+    register(:Env,    'env',    'dev/commands/env')
     register(:Help,   'help',   'dev/commands/help')
     register(:Init,   'init',   'dev/commands/init')
+    register(:Logs,   'logs',   'dev/commands/logs')
     register(:Open,   'open',   'dev/commands/open')
+    register(:Ps,     'ps',     'dev/commands/ps')
+    register(:Reset,  'reset',  'dev/commands/reset')
+    register(:Status, 'status', 'dev/commands/status')
+    register(:Stop,   'stop',   'dev/commands/stop')
     register(:Up,     'up',     'dev/commands/up')
   end
 end

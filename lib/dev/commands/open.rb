@@ -23,7 +23,7 @@ module Dev
       end
 
       def self.help
-        'TODO'
+        'Open project-related URLs. Currently supports `dev open pr` for the current GitHub branch.'
       end
 
       def origin_to_url(origin)

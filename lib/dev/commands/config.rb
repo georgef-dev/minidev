@@ -27,6 +27,10 @@ module Dev
         end
       end
 
+      def self.help
+        'Read and update minidev config values with `get`, `set`, and `unset`.'
+      end
+
       private
 
       def split_key(section_and_key)

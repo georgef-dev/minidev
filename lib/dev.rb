@@ -14,8 +14,20 @@ module Dev
   autoload(:EntryPoint,         'dev/entry_point')
   autoload(:Commands,           'dev/commands')
   autoload(:ContextualResolver, 'dev/contextual_resolver')
+  autoload(:Doctor,             'dev/doctor')
+  autoload(:Instance,           'dev/instance')
+  autoload(:InstanceState,      'dev/instance_state')
+  autoload(:ProcessManager,     'dev/process_manager')
   autoload(:Project,            'dev/project')
+  autoload(:ServiceRuntime,     'dev/service_runtime')
+  autoload(:Shell,              'dev/shell')
   autoload(:Default,            'dev/default')
+
+  module Services
+    autoload(:EnvBuilder, 'dev/services/env_builder')
+    autoload(:MySQL, 'dev/services/mysql')
+    autoload(:Resolver, 'dev/services/resolver')
+  end
 
   Config = CLI::Kit::Config.new(tool_name: TOOL_NAME)
   Command = CLI::Kit::BaseCommand

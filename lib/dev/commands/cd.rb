@@ -20,23 +20,47 @@ module Dev
       end
 
       def avail
-        owners = Dir.entries(File.expand_path(Dev::Default.github_root)) - %w(. ..)
-        owners = owners.select do |f|
-          File.directory?(File.join(File.expand_path(Dev::Default.github_root), f))
-        end
-
         owners.flat_map do |owner|
-          repos = Dir.entries(File.expand_path(File.join(Dev::Default.github_root, owner))) - %w(. ..)
-          repos = repos.select do |f|
-            File.directory?(File.join(File.expand_path(File.join(Dev::Default.github_root, owner)), f))
-          end
-
-          repos.map { |r| File.join(owner, r) }
+          repos_for(owner).flat_map { |repo| repo_candidates(owner, repo) }
         end
       end
 
       def self.help
-        'TODO'
+        'Find a repository or standardized monorepo app under the configured github_root and change into it.'
+      end
+
+      private
+
+      def github_root
+        File.expand_path(Dev::Default.github_root)
+      end
+
+      def owners
+        directories(github_root)
+      end
+
+      def repos_for(owner)
+        directories(File.join(github_root, owner))
+      end
+
+      def repo_candidates(owner, repo)
+        root_candidate = File.join(owner, repo)
+        [root_candidate] + monorepo_area_candidates(root_candidate)
+      end
+
+      def monorepo_area_candidates(root_candidate)
+        %w(clients core).flat_map do |area|
+          area_root = File.join(github_root, root_candidate, 'areas', area)
+          directories(area_root).map { |app| File.join(root_candidate, 'areas', area, app) }
+        end
+      end
+
+      def directories(path)
+        return [] unless Dir.exist?(path)
+
+        (Dir.entries(path) - %w(. ..)).select do |entry|
+          File.directory?(File.join(path, entry))
+        end
       end
     end
   end
