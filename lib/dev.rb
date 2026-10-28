@@ -25,6 +25,7 @@ module Dev
 
   module Services
     autoload(:EnvBuilder, 'dev/services/env_builder')
+    autoload(:ManagedServer, 'dev/services/managed_server')
     autoload(:MySQL, 'dev/services/mysql')
     autoload(:Resolver, 'dev/services/resolver')
   end
