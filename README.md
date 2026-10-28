@@ -153,6 +153,7 @@ Supported service types:
 
 * `process`: starts a long-running shell command and tracks it in minidev state.
 * `mysql`: starts a managed MariaDB server for the current project instance.
+* `postgres`: starts a managed PostgreSQL server for the current project instance.
 
 Process service schema:
 
@@ -185,6 +186,24 @@ services:
 ```
 
 `database`, `test_database`, `username`, `password_env`, and `env` are optional. If database names or username are omitted, minidev derives local defaults from the project directory name. `password_env` names an environment variable; if configured, that variable must be set before MariaDB state is prepared. Password values are not persisted in instance state.
+
+PostgreSQL service schema:
+
+```yml
+services:
+  postgres:
+    type: postgres
+    database: shop_development
+    test_database: shop_test
+    username: shop
+    password_env: POSTGRES_PASSWORD
+```
+
+The supported keys match `mysql`: `type`, `database`, `test_database`, `username`, `password_env`, and `env`. If database names or username are omitted, minidev derives the same local defaults from the project directory name. `password_env` names an environment variable; if configured, that variable must be set before PostgreSQL state is prepared. Password values are not persisted in instance state.
+
+Required PostgreSQL binaries: `postgres`, `initdb`, `psql`, `pg_isready`, `pg_ctl`. Run `dev doctor` to check for them.
+
+A `dev.yml` cannot define both a `mysql` service and a `postgres` service. Both export `DATABASE_URL`, and loading the config fails if both types are present.
 
 `up.services` resolves string items as services first, then commands, then raw shell. If both `services.mysql` and `commands.mysql` exist, `mysql` inside `up.services` means the service and minidev prints a warning when loading config. Use `{ command: mysql }` to reference the command explicitly.
 
@@ -254,7 +273,7 @@ Introspection commands:
 * `dev env` prints minidev-controlled environment values: top-level `env`, instance metadata, and resolved service env. Inherited shell env is not printed. Secret-looking keys are redacted.
 * `dev reset <service>` stops and resets one service. `dev reset --all` resets all known services. `dev reset` without a service or `--all` is rejected.
 
-Process reset removes that process record, pid file, and log. MariaDB reset removes the owned datadir, socket, pid, generated config, run dir, and tmp dir, while preserving the MariaDB log file.
+Process reset removes that process record, pid file, and log. MariaDB reset removes the owned datadir, socket, pid, generated config, run dir, and tmp dir, while preserving the MariaDB log file. PostgreSQL reset removes the same owned paths, including the socket directory, and preserves the PostgreSQL log file.
 
 ## Known Limitations
 
@@ -262,6 +281,7 @@ Process reset removes that process record, pid file, and log. MariaDB reset remo
 * Real MariaDB integration requires those binaries in the active Nix environment or on `PATH`. Unit tests use fake binaries; `dev doctor` reports missing real binaries as errors for configured MySQL services.
 * Command execution uses a Nix `bash` only when `bash` on `PATH` is under `/nix/store`. Otherwise minidev warns and falls back to `/bin/bash`.
 * Managed MariaDB uses a short socket path under `/tmp/minidev/` to stay below MariaDB's macOS Unix socket path limit.
+* Managed `postgres` requires the `postgres`, `initdb`, `psql`, `pg_isready`, and `pg_ctl` binaries. A `dev.yml` cannot define both a `mysql` service and a `postgres` service, because both export `DATABASE_URL`.
 * Logs append for now. There is no log rotation or truncation policy.
 * `dev reset` requires a service name or `--all`.
 * `dev ps` is process-focused. Use `dev status` for configured-but-stopped services and service readiness.

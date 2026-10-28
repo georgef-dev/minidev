@@ -194,6 +194,7 @@ Supported service types:
 
 - `process`
 - `mysql`
+- `postgres`
 
 ### Process Services
 
@@ -277,6 +278,53 @@ Managed MySQL currently means MariaDB. These binaries must be available from the
 Run `dev doctor` to check this.
 
 Password values are never persisted in instance state. If `password_env` is configured, that environment variable must be set before MariaDB is prepared.
+
+### Managed PostgreSQL Service
+
+`type: postgres` starts a PostgreSQL server owned by the current project instance.
+
+```yml
+services:
+  postgres:
+    type: postgres
+    database: shop_development
+    test_database: shop_test
+    username: shop
+    password_env: POSTGRES_PASSWORD
+
+up:
+  services:
+    - postgres
+```
+
+Supported fields for `postgres`:
+
+- `type: postgres`
+- `database`: app database name
+- `test_database`: test database name
+- `username`: database user
+- `password_env`: environment variable containing the password
+- `env`: extra environment values for the PostgreSQL process
+
+If `database`, `test_database`, or `username` are omitted, `minidev` derives defaults from the project directory name:
+
+- `<project>_development`
+- `<project>_test`
+- `<project>`
+
+These binaries must be available from the active environment:
+
+- `postgres`
+- `initdb`
+- `psql`
+- `pg_isready`
+- `pg_ctl`
+
+Run `dev doctor` to check this.
+
+Password values are never persisted in instance state. If `password_env` is configured, that environment variable must be set before PostgreSQL is prepared.
+
+A `dev.yml` cannot define both a `mysql` service and a `postgres` service. Both export `DATABASE_URL`, so `minidev` rejects a config with both, and loading it fails.
 
 ## Command And Service Name Collisions
 
