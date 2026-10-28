@@ -89,12 +89,14 @@ module Dev
         case type
         when 'process'
           validate_process_service(name, service)
-        when 'mysql'
-          validate_mysql_service(name, service)
+        when 'mysql', 'postgres'
+          validate_managed_database_service(name, service)
         else
-          raise(Abort, "services.#{name}.type must be one of: process, mysql")
+          raise(Abort, "services.#{name}.type must be one of: process, mysql, postgres")
         end
       end
+
+      assert_at_most_one_managed_database_type!(services)
     end
 
     def validate_process_service(name, service)
@@ -109,13 +111,22 @@ module Dev
       validate_env(name, service['env']) if service.key?('env')
     end
 
-    def validate_mysql_service(name, service)
+    def validate_managed_database_service(name, service)
       assert_allowed_service_keys(name, service, %w(type database test_database username password_env env))
       %w(database test_database username password_env).each do |key|
         next unless service.key?(key)
         raise(Abort, "services.#{name}.#{key} must be a string") unless service[key].is_a?(String)
       end
       validate_env(name, service['env']) if service.key?('env')
+    end
+
+    # Both adapters export DATABASE_URL, and EnvBuilder merges every service's
+    # env in hash order, so a mixed config would make DATABASE_URL non-deterministic.
+    def assert_at_most_one_managed_database_type!(services)
+      types = services.values.map { |service| service['type'] }
+      return unless types.include?('mysql') && types.include?('postgres')
+
+      raise(Abort, 'dev.yml cannot define both a mysql service and a postgres service; DATABASE_URL would be ambiguous')
     end
 
     def assert_allowed_service_keys(name, service, allowed)

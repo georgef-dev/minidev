@@ -40,4 +40,38 @@ class ServiceRuntimeTest < Minitest::Test
       end
     end
   end
+
+  def test_configured_postgres_service_appears_in_services_and_known_names
+    with_home do
+      with_project(<<~YAML) do |project|
+        services:
+          postgres:
+            type: postgres
+      YAML
+        runtime = Dev::ServiceRuntime.new(project)
+
+        summary = runtime.service('postgres')
+
+        assert_equal 'postgres', summary['type']
+        assert_equal 'stopped', summary['state']
+        assert_includes runtime.known_service_names, 'postgres'
+      end
+    end
+  end
+
+  def test_reset_routes_configured_postgres_service_through_managed_path
+    with_home do
+      with_project(<<~YAML) do |project|
+        services:
+          postgres:
+            type: postgres
+      YAML
+        runtime = Dev::ServiceRuntime.new(project)
+
+        # A configured-but-never-started postgres service has no record to reset,
+        # so this exercises managed_service_name? routing without starting a server.
+        assert_equal [], runtime.reset(['postgres'])
+      end
+    end
+  end
 end

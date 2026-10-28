@@ -291,10 +291,36 @@ class UpTest < Minitest::Test
         @up.stub(:puts, nil) do
           @up.stub(:runtime, runtime) do
             started = []
-            runtime.define_singleton_method(:start_mysql) { |name| started << name }
+            runtime.define_singleton_method(:start_managed_service) { |name| started << name }
             @up.call([], 'up')
 
             assert_equal ['mysql'], started
+          end
+        end
+      end
+    end
+  end
+
+  def test_call_starts_postgres_service_through_runtime
+    with_project(<<~YAML) do |project|
+      up:
+        services:
+          - postgres
+      services:
+        postgres:
+          type: postgres
+    YAML
+      Dev::Project.stub(:current, project) do
+        runtime = Object.new
+        runtime.define_singleton_method(:refresh) {}
+
+        @up.stub(:puts, nil) do
+          @up.stub(:runtime, runtime) do
+            started = []
+            runtime.define_singleton_method(:start_managed_service) { |name| started << name }
+            @up.call([], 'up')
+
+            assert_equal ['postgres'], started
           end
         end
       end

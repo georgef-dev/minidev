@@ -45,6 +45,8 @@ module Dev
           Resolved.new(kind: :service, name: name, type: 'process', sh: sh, args: args, label: cfg['label'], env: cfg.fetch('env', {}))
         when 'mysql'
           Resolved.new(kind: :service, name: name, type: 'mysql', label: name, env: cfg.fetch('env', {}))
+        when 'postgres'
+          Resolved.new(kind: :service, name: name, type: 'postgres', label: name, env: cfg.fetch('env', {}))
         else
           raise(Abort, "Unsupported service type #{cfg['type']} for #{name}")
         end

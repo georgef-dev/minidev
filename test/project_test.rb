@@ -91,7 +91,69 @@ class ProjectTest < Minitest::Test
     YAML
       error = assert_raises(Dev::Abort) { project.config }
 
-      assert_equal 'services.redis.type must be one of: process, mysql', error.message
+      assert_equal 'services.redis.type must be one of: process, mysql, postgres', error.message
+    end
+  end
+
+  def test_services_postgres_config_can_be_read
+    with_project(<<~YAML) do |project|
+      services:
+        postgres:
+          type: postgres
+          database: app_development
+          test_database: app_test
+          username: app
+          password_env: APP_DB_PASSWORD
+          env:
+            PGOPTIONS: "-c search_path=app"
+    YAML
+
+      assert_equal 'postgres', project.service_config('postgres')['type']
+      assert_equal 'app_development', project.service_config('postgres')['database']
+      assert_equal 'app_test', project.service_config('postgres')['test_database']
+      assert_equal 'app', project.service_config('postgres')['username']
+      assert_equal 'APP_DB_PASSWORD', project.service_config('postgres')['password_env']
+      assert_equal '-c search_path=app', project.service_config('postgres')['env']['PGOPTIONS']
+    end
+  end
+
+  def test_postgres_service_rejects_unsupported_keys
+    with_project(<<~YAML) do |project|
+      services:
+        postgres:
+          type: postgres
+          bogus: true
+    YAML
+      error = assert_raises(Dev::Abort) { project.config }
+
+      assert_equal 'services.postgres has unsupported keys: bogus', error.message
+    end
+  end
+
+  def test_postgres_service_requires_string_database
+    with_project(<<~YAML) do |project|
+      services:
+        postgres:
+          type: postgres
+          database: 123
+    YAML
+      error = assert_raises(Dev::Abort) { project.config }
+
+      assert_equal 'services.postgres.database must be a string', error.message
+    end
+  end
+
+  def test_mysql_and_postgres_services_cannot_both_be_defined
+    with_project(<<~YAML) do |project|
+      services:
+        mysql:
+          type: mysql
+        postgres:
+          type: postgres
+    YAML
+      error = assert_raises(Dev::Abort) { project.config }
+
+      assert_equal 'dev.yml cannot define both a mysql service and a postgres service; DATABASE_URL would be ambiguous', error.message
     end
   end
 

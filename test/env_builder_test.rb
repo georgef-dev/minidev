@@ -49,4 +49,43 @@ class EnvBuilderTest < Minitest::Test
       end
     end
   end
+
+  def test_command_env_includes_postgres_password_only_when_source_env_is_set
+    with_home do
+      with_project(<<~YAML) do |project|
+        services:
+          postgres:
+            type: postgres
+            password_env: APP_DB_PASSWORD
+      YAML
+        previous = ENV['APP_DB_PASSWORD']
+        ENV['APP_DB_PASSWORD'] = 'secret'
+
+        env = Dev::Services::EnvBuilder.new(project).command_env
+
+        assert_equal 'secret', env['POSTGRES_PASSWORD']
+      ensure
+        ENV['APP_DB_PASSWORD'] = previous
+      end
+    end
+  end
+
+  def test_command_env_omits_postgres_password_when_source_env_is_unset
+    with_home do
+      with_project(<<~YAML) do |project|
+        services:
+          postgres:
+            type: postgres
+            password_env: APP_DB_PASSWORD
+      YAML
+        previous = ENV.delete('APP_DB_PASSWORD')
+
+        env = Dev::Services::EnvBuilder.new(project).command_env
+
+        refute env.key?('POSTGRES_PASSWORD')
+      ensure
+        ENV['APP_DB_PASSWORD'] = previous if previous
+      end
+    end
+  end
 end

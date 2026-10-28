@@ -37,12 +37,16 @@ module Dev
         end
       end
 
+      SECRET_ENV_KEYS = { 'mysql' => 'MYSQL_PASSWORD', 'postgres' => 'POSTGRES_PASSWORD' }.freeze
+      private_constant :SECRET_ENV_KEYS
+
       def runtime_secret_env
         @project.services_config.each_with_object({}) do |_name_config, env|
           _name, config = _name_config
-          next unless config['type'] == 'mysql' && config['password_env'] && @env.key?(config['password_env'])
+          secret_key = SECRET_ENV_KEYS[config['type']]
+          next unless secret_key && config['password_env'] && @env.key?(config['password_env'])
 
-          env['MYSQL_PASSWORD'] = @env.fetch(config['password_env']).to_s
+          env[secret_key] = @env.fetch(config['password_env']).to_s
         end
       end
 

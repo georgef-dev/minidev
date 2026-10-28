@@ -75,7 +75,7 @@ module Dev
       def start_service(step)
         resolved = @service_resolver.resolve_start_step(step)
 
-        return start_mysql(resolved.name, step) if resolved.type == 'mysql'
+        return start_managed_service(resolved.name, step) if Dev::ServiceRuntime.managed_service_type?(resolved.type)
 
         sh = resolved.sh
         args = resolved.args
@@ -160,9 +160,9 @@ module Dev
         runtime.start_process(name, sh, args, service_env: service_env)
       end
 
-      def start_mysql(name, step)
+      def start_managed_service(name, step)
         puts CLI::UI.fmt("{{info:starting}} #{describe_step(step)}")
-        runtime.start_mysql(name)
+        runtime.start_managed_service(name)
       end
 
       def report_progress(message)

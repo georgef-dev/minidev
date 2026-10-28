@@ -3,6 +3,16 @@ require 'fileutils'
 
 module Dev
   class ServiceRuntime
+    MANAGED_SERVICE_ADAPTERS = {
+      'mysql' => Services::MySQL,
+      'postgres' => Services::Postgres,
+    }.freeze
+    private_constant :MANAGED_SERVICE_ADAPTERS
+
+    def self.managed_service_type?(type)
+      MANAGED_SERVICE_ADAPTERS.key?(type)
+    end
+
     def initialize(project, reporter: nil)
       @project = project
       @instance = Instance.for_project(project)
@@ -16,12 +26,12 @@ module Dev
 
     def refresh
       @process_manager.ps
-      mysql_services.each(&:refresh)
+      managed_services.each(&:refresh)
       @env_builder.persist!
     end
 
-    def start_mysql(name)
-      service = mysql_service(name)
+    def start_managed_service(name)
+      service = managed_service(name)
       record = service.start
       @env_builder.persist!
       record
@@ -37,10 +47,10 @@ module Dev
 
     def stop(names = nil)
       names = Array(names).map(&:to_s)
-      mysql_records, stopped_mysql_names = stop_mysql_services(names)
-      process_names = names - stopped_mysql_names
+      managed_records, stopped_managed_names = stop_managed_services(names)
+      process_names = names - stopped_managed_names
       process_arg = names.empty? ? nil : process_names
-      records = mysql_records.compact + @process_manager.stop(process_arg)
+      records = managed_records.compact + @process_manager.stop(process_arg)
       @env_builder.persist!
       records
     end
@@ -104,8 +114,8 @@ module Dev
     end
 
     def reset_one(name)
-      if mysql_service_name?(name)
-        result = mysql_service(name).reset
+      if managed_service_name?(name)
+        result = managed_service(name).reset
         return result ? [result] : []
       end
 
@@ -137,11 +147,11 @@ module Dev
       raise(Abort, "Cannot safely reset service: path is outside state root: #{path}")
     end
 
-    def mysql_service_name?(name)
+    def managed_service_name?(name)
       config = @project.service_config(name)
-      return true if config && config['type'] == 'mysql'
+      return true if config && MANAGED_SERVICE_ADAPTERS.key?(config['type'])
 
-      @state.ensure!.fetch('services', {}).fetch(name, {})['type'] == 'mysql'
+      MANAGED_SERVICE_ADAPTERS.key?(@state.ensure!.fetch('services', {}).fetch(name, {})['type'])
     end
 
     def service_display_name(key)
@@ -197,20 +207,27 @@ module Dev
       raise(Abort, message)
     end
 
-    def mysql_services
-      @project.services_config.select { |_name, config| config['type'] == 'mysql' }.map { |name, config| Services::MySQL.new(@project, name, config, instance: @instance, state: @state, reporter: @reporter) }
+    def managed_services
+      @project.services_config.filter_map do |name, config|
+        adapter = MANAGED_SERVICE_ADAPTERS[config['type']]
+        next unless adapter
+
+        adapter.new(@project, name, config, instance: @instance, state: @state, reporter: @reporter)
+      end
     end
 
-    def mysql_service(name)
+    def managed_service(name)
       config = @project.service_config(name.to_s)
-      config ||= { 'type' => 'mysql' } if @state.ensure!.fetch('services', {}).fetch(name.to_s, {})['type'] == 'mysql'
-      raise_unknown_service(name) unless config && config['type'] == 'mysql'
+      recorded_type = @state.ensure!.fetch('services', {}).fetch(name.to_s, {})['type']
+      config ||= { 'type' => recorded_type } if MANAGED_SERVICE_ADAPTERS.key?(recorded_type)
+      adapter = config && MANAGED_SERVICE_ADAPTERS[config['type']]
+      raise_unknown_service(name) unless adapter
 
-      Services::MySQL.new(@project, name, config, instance: @instance, state: @state, reporter: @reporter)
+      adapter.new(@project, name, config, instance: @instance, state: @state, reporter: @reporter)
     end
 
-    def stop_mysql_services(names)
-      targets = mysql_services.select { |service| names.empty? || names.include?(service.name) }
+    def stop_managed_services(names)
+      targets = managed_services.select { |service| names.empty? || names.include?(service.name) }
       [targets.map(&:stop), targets.map(&:name)]
     end
   end

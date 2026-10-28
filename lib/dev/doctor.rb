@@ -209,17 +209,19 @@ module Dev
         elsif type == 'process' && config['run']
           check_shell(project, config['run'], "services.#{name}")
         elsif type == 'mysql'
-          check_service_binaries(name)
+          check_service_binaries(name, Dev::Services::MySQL, 'MariaDB')
+        elsif type == 'postgres'
+          check_service_binaries(name, Dev::Services::Postgres, 'PostgreSQL')
         end
       end
     end
 
-    def check_service_binaries(name)
-      Dev::Services::MySQL.required_binaries.each do |binary|
+    def check_service_binaries(name, adapter, engine_name)
+      adapter.required_binaries.each do |binary|
         if path_lookup(binary)
-          add(:ok, "services.#{name} MariaDB binary found", binary)
+          add(:ok, "services.#{name} #{engine_name} binary found", binary)
         else
-          add(:error, "services.#{name} MariaDB binary missing", binary)
+          add(:error, "services.#{name} #{engine_name} binary missing", binary)
         end
       end
     end
